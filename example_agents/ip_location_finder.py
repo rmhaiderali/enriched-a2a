@@ -4,7 +4,7 @@ import sys
 sys.path.append(os.path.dirname(next((p for p in sys.path if p.endswith(".venv")))))
 
 from main import Agent
-from llms import Pydantic_LLM, OpenAI_LLM
+from sdks import Pydantic, OpenAI
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from pydantic_ai.tools import Tool
 
@@ -94,7 +94,14 @@ async def get_location_by_ip(ip: str) -> dict:
 
 
 agent = Agent(
-    llm=OpenAI_LLM,
+    sdk=OpenAI,
+    model="gpt-4o-mini",
+    # model="anthropic/claude-sonnet-4",
+    # model="google/gemini-2.0-flash-001",
+    #
+    # sdk=Pydantic,
+    # model="gpt-4o-mini",
+    #
     card=card,
     system_prompt="You are a helpful assistant that can answer questions and provide information based on the tools available.",
     tools=[Tool(get_ips_by_domain), Tool(get_location_by_ip)],

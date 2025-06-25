@@ -10,9 +10,9 @@ load_dotenv()
 console = Console()
 
 
-class LLM:
+class SDK:
     @abstractmethod
-    def __init__(self, system_prompt: str, tools: list[Tool]) -> None:
+    def __init__(self, model: str, system_prompt: str, tools: list[Tool]) -> None:
         """Initialize the LLM with a system prompt.
 
         Args:
@@ -32,23 +32,23 @@ class LLM:
         """
 
 
-class Echo(LLM):
-    def __init__(self, system_prompt: str, tools: list[Tool]) -> None:
+class Echo(SDK):
+    def __init__(self, model: str, system_prompt: str, tools: list[Tool]) -> None:
         """"""
 
     async def run(self, message: str, context_id: str) -> str:
         return f"echo: {message}"
 
 
-class Pydantic_LLM(LLM):
-    def __init__(self, system_prompt: str, tools: list[Tool]) -> None:
+class Pydantic(SDK):
+    def __init__(self, model: str, system_prompt: str, tools: list[Tool]) -> None:
         from pydantic_ai import Agent
 
-        self.llm = Agent("openai:gpt-4o", system_prompt=system_prompt)
+        self.agent = Agent(model, system_prompt=system_prompt)
         self.contexts = {}
 
         for tool in tools:
-            self.llm._register_tool(tool)
+            self.agent._register_tool(tool)
 
     async def run(self, message: str, context_id: str) -> str:
         if not isinstance(self.contexts.get(context_id), list):
@@ -56,7 +56,7 @@ class Pydantic_LLM(LLM):
 
         result = None
         try:
-            result = await self.llm.run(
+            result = await self.agent.run(
                 message, message_history=self.contexts[context_id]
             )
         except Exception as e:
@@ -68,13 +68,14 @@ class Pydantic_LLM(LLM):
         return result.output if result else "Error while calling LLM"
 
 
-class OpenAI_LLM(LLM):
-    def __init__(self, system_prompt: str, tools: list[Tool]) -> None:
-        from openai import OpenAI
+class OpenAI(SDK):
+    def __init__(self, model: str, system_prompt: str, tools: list[Tool]) -> None:
+        from openai import OpenAI as Agent
 
-        self.tools = tools
+        self.model = model
         self.system_prompt = system_prompt
-        self.llm = OpenAI(base_url=os.getenv("OPENAI_API_BASE"))
+        self.tools = tools
+        self.agent = Agent(base_url=os.getenv("OPENAI_API_BASE"))
         self.contexts = {}
 
     async def run(self, message: str, context_id: str) -> str:
@@ -89,10 +90,8 @@ class OpenAI_LLM(LLM):
         result = None
         try:
             while True:
-                result = self.llm.chat.completions.create(
-                    model="gpt-4o-mini",
-                    # model="anthropic/claude-sonnet-4",
-                    # model="google/gemini-2.0-flash-001",
+                result = self.agent.chat.completions.create(
+                    model=self.model,
                     messages=self.contexts[context_id],
                     tools=[
                         {

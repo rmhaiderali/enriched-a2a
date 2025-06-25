@@ -7,12 +7,12 @@ from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.tasks import InMemoryTaskStore
 from a2a.utils import new_agent_text_message
 from pydantic_ai.tools import Tool
-from llms import LLM
+from sdks import SDK
 
 
 class Executor(AgentExecutor):
-    def __init__(self, llm: LLM):
-        self.llm = llm
+    def __init__(self, agent: SDK):
+        self.agent = agent
 
     async def execute(
         self,
@@ -23,7 +23,7 @@ class Executor(AgentExecutor):
         context_id = context.message.contextId
         task_id = context.message.taskId
 
-        output = await self.llm.run(input, context_id)
+        output = await self.agent.run(input, context_id)
 
         await event_queue.enqueue_event(
             new_agent_text_message(output, context_id, task_id)
@@ -40,8 +40,9 @@ class Executor(AgentExecutor):
 class Agent:
     def __init__(
         self,
-        llm: LLM,
+        sdk: SDK,
         card: AgentCard,
+        model: str | None = None,
         extended_card: AgentCard | None = None,
         system_prompt: str = "",
         tools: list[Tool] = [],
@@ -51,7 +52,7 @@ class Agent:
         for tool in tools:
             if not isinstance(tool, Tool):
                 raise TypeError(f"{tool} is not an instance of pydantic ai tool")
-        self.llm = llm(system_prompt=system_prompt, tools=tools)
+        self.agent = sdk(model=model, system_prompt=system_prompt, tools=tools)
 
         if not isinstance(self.card, AgentCard):
             raise TypeError("card must be an instance of AgentCard")
@@ -64,7 +65,7 @@ class Agent:
             raise ValueError("port must be an integer between 1 and 65535")
 
         request_handler = DefaultRequestHandler(
-            agent_executor=Executor(llm=self.llm),
+            agent_executor=Executor(agent=self.agent),
             task_store=InMemoryTaskStore(),
         )
 

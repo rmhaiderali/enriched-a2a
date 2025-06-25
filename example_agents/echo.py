@@ -4,7 +4,7 @@ import sys
 sys.path.append(os.path.dirname(next((p for p in sys.path if p.endswith(".venv")))))
 
 from main import Agent
-from llms import Echo
+from sdks import Echo
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 
 port = 4400
@@ -28,6 +28,6 @@ card = AgentCard(
     skills=[echo_skill],
 )
 
-agent = Agent(llm=Echo, card=card)
+agent = Agent(sdk=Echo, card=card)
 
 agent.run(port)
