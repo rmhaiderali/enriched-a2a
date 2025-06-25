@@ -4,7 +4,7 @@ import sys
 sys.path.append(os.path.dirname(next((p for p in sys.path if p.endswith(".venv")))))
 
 from main import Agent
-from llms import Pydantic_LLM
+from llms import Pydantic_LLM, OpenAI_LLM
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from pydantic_ai.tools import Tool
 
@@ -27,19 +27,57 @@ get_location_by_ip_skill = AgentSkill(
     ],
 )
 
+get_ips_by_domain_skill = AgentSkill(
+    id="get_ips_by_domain",
+    name="Get IPs by Domain",
+    description="Retrieves IP addresses associated with a given domain name.",
+    tags=["dns", "domain", "ip address", "network"],
+    examples=[
+        "What are the IPs for google.com?",
+        "Get IP addresses for example.com",
+        "Which IPs does openai.com resolve to?",
+        "Find all IPs linked to wikipedia.org",
+        "Show me the IP addresses for github.com",
+    ],
+)
+
 card = AgentCard(
-    name="IP Location Finder Agent",
-    description="An agent that can find geographical location details for IP addresses using an external lookup service.",
+    name="IP & Domain Network Agent",
+    description="An agent that can find geographical location details for IP addresses and resolve domains to IP addresses using an external lookup service.",
     url=f"http://localhost:{port}",
     version="1.0.0",
     defaultInputModes=["text"],
     defaultOutputModes=["text"],
     capabilities=AgentCapabilities(streaming=False),
-    skills=[get_location_by_ip_skill],
+    skills=[
+        get_location_by_ip_skill,
+        get_ips_by_domain_skill,
+    ],
 )
 
 import httpx
 import ipaddress
+import validators
+
+
+async def get_ips_by_domain(domain: str) -> dict:
+    """Get IP addresses associated with a domain (must be a valid FQDN)."""
+    if not validators.domain(domain):
+        raise ValueError(
+            f"Invalid domain name: {domain}. Must be a valid hostname (FQDN)."
+        )
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"https://ipleak.net/json/{domain}")
+        response.raise_for_status()
+        data = response.json()
+        error = data.get("error")
+        ips = data.get("ips")
+
+        if error:
+            return {"error": error}
+        else:
+            return {"ips": list(ips.keys())}
 
 
 async def get_location_by_ip(ip: str) -> dict:
@@ -56,10 +94,10 @@ async def get_location_by_ip(ip: str) -> dict:
 
 
 agent = Agent(
-    llm=Pydantic_LLM,
+    llm=OpenAI_LLM,
     card=card,
     system_prompt="You are a helpful assistant that can answer questions and provide information based on the tools available.",
-    tools=[Tool(get_location_by_ip)],
+    tools=[Tool(get_ips_by_domain), Tool(get_location_by_ip)],
 )
 
 agent.run(port)

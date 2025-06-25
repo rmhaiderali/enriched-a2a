@@ -9,4 +9,5 @@ dependencies = [
     "dotenv>=0.9.9",
     "pydantic-ai>=0.3.3",
     "rich>=14.0.0",
+    "validators>=0.35.0",
 ]

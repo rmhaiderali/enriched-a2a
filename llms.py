@@ -1,7 +1,8 @@
+import os
+import json
 from abc import abstractmethod
 from dotenv import load_dotenv
 from pydantic_ai.tools import Tool
-from types import SimpleNamespace
 from rich.console import Console
 from rich.traceback import Traceback
 
@@ -55,11 +56,83 @@ class Pydantic_LLM(LLM):
 
         result = None
         try:
-            result = await self.llm.run(message, message_history=self.contexts[context_id])
+            result = await self.llm.run(
+                message, message_history=self.contexts[context_id]
+            )
         except Exception as e:
             console.print(Traceback())
-            result = SimpleNamespace(output="Error while calling LLM", new_messages=lambda: [])
 
-        self.contexts[context_id].extend(result.new_messages())
+        if result:
+            self.contexts[context_id].extend(result.new_messages())
 
-        return result.output
+        return result.output if result else "Error while calling LLM"
+
+
+class OpenAI_LLM(LLM):
+    def __init__(self, system_prompt: str, tools: list[Tool]) -> None:
+        from openai import OpenAI
+
+        self.tools = tools
+        self.system_prompt = system_prompt
+        self.llm = OpenAI(base_url=os.getenv("OPENAI_API_BASE"))
+        self.contexts = {}
+
+    async def run(self, message: str, context_id: str) -> str:
+        if not isinstance(self.contexts.get(context_id), list):
+            self.contexts[context_id] = []
+
+        self.contexts[context_id].append(
+            {"role": "system", "content": self.system_prompt}
+        )
+        self.contexts[context_id].append({"role": "user", "content": message})
+
+        result = None
+        try:
+            while True:
+                result = self.llm.chat.completions.create(
+                    model="gpt-4o-mini",
+                    # model="anthropic/claude-sonnet-4",
+                    # model="google/gemini-2.0-flash-001",
+                    messages=self.contexts[context_id],
+                    tools=[
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": tool.name,
+                                "description": tool.description,
+                                "parameters": tool.function_schema.json_schema,
+                            },
+                        }
+                        for tool in self.tools
+                    ],
+                )
+
+                self.contexts[context_id].append(result.choices[0].message)
+
+                if not result.choices[0].message.tool_calls:
+                    break
+
+                for tool_call in result.choices[0].message.tool_calls:
+                    tool = next(
+                        (t for t in self.tools if t.name == tool_call.function.name),
+                    )
+
+                    tool_result = await tool.function(
+                        **json.loads(tool_call.function.arguments)
+                    )
+
+                    self.contexts[context_id].append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": str(tool_result),
+                        }
+                    )
+        except Exception as e:
+            console.print(Traceback())
+
+        output = (
+            result.choices[0].message.content if result else "Error while calling LLM"
+        )
+
+        return output
