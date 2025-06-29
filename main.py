@@ -8,6 +8,7 @@ from a2a.server.tasks import InMemoryTaskStore
 from a2a.utils import new_agent_text_message
 from pydantic_ai.tools import Tool
 from sdks import SDK
+from tools import discover_agents, call_agent
 
 
 class Executor(AgentExecutor):
@@ -52,6 +53,21 @@ class Agent:
         for tool in tools:
             if not isinstance(tool, Tool):
                 raise TypeError(f"{tool} is not an instance of pydantic ai tool")
+
+        tools.append(Tool(discover_agents))
+        tools.append(Tool(call_agent))
+
+        system_prompt = (
+            "You have a tool called 'discover_agents' that can be used to "
+            "discover agents for a specific task. It returns a list of agent "
+            "cards based on a search query (like google search). You can use "
+            "it to find agents that can help you with your task. After getting "
+            "agent cards list you can pick a agent (based on agent card which "
+            "includes all detiled information about agent including its skills "
+            "and capabilities. You have to provide url and a prompt in natural "
+            "language to use 'call_agent' tool.\n" + system_prompt
+        )
+
         self.agent = sdk(model=model, system_prompt=system_prompt, tools=tools)
 
         if not isinstance(self.card, AgentCard):
