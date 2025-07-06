@@ -1,4 +1,5 @@
 import uvicorn
+import inspect
 from a2a.types import AgentCard
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.apps import A2AStarletteApplication
@@ -8,7 +9,7 @@ from a2a.server.tasks import InMemoryTaskStore
 from a2a.utils import new_agent_text_message
 from pydantic_ai.tools import Tool
 from sdks import SDK
-from tools import discover_agents, call_agent
+from internal_tools import discover_agents, call_agent
 
 
 class Executor(AgentExecutor):
@@ -50,9 +51,15 @@ class Agent:
     ):
         self.card = card
         self.extended_card = extended_card
-        for tool in tools:
-            if not isinstance(tool, Tool):
-                raise TypeError(f"{tool} is not an instance of pydantic ai tool")
+
+        for index, tool in enumerate(tools):
+            if not inspect.isfunction(tool):
+                raise TypeError(f"Element at index {index} is not a function")
+            if tool.__name__ == "<lambda>":
+                raise ValueError(
+                    f"Element at index {index} is a lambda which is not allowed"
+                )
+            tools[index] = Tool(tool)
 
         tools.append(Tool(discover_agents))
         tools.append(Tool(call_agent))

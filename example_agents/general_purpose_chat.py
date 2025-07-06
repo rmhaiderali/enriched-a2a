@@ -6,7 +6,6 @@ sys.path.append(os.path.dirname(next((p for p in sys.path if p.endswith(".venv")
 from main import Agent
 from sdks import Pydantic, OpenAI
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
-from pydantic_ai.tools import Tool
 
 port = 4403
 
