@@ -1,3 +1,6 @@
+import os
+import sys
+import json
 import httpx
 from uuid import uuid4
 from a2a.client import A2AClient
@@ -21,66 +24,21 @@ async def discover_agents(query: str) -> list:
         list: A list of agent cards that match the query.
     """
     # TODO: Implement actual agent discovery logic.
-    return [
-        {
-            "capabilities": {"streaming": False},
-            "defaultInputModes": ["text"],
-            "defaultOutputModes": ["text"],
-            "description": "A simple agent that echoes back any message it receives. Useful for testing basic communication.",
-            "name": "Echo Agent",
-            "skills": [
-                {
-                    "description": "Repeats the user's input message exactly as it was received.",
-                    "examples": ["hello world", "hi"],
-                    "id": "echo",
-                    "name": "Echo Input",
-                    "tags": ["echo", "utility", "test", "simple"],
-                }
-            ],
-            "url": "http://localhost:4400",
-            "version": "1.0.0",
-        },
-        {
-            "capabilities": {"streaming": False},
-            "defaultInputModes": ["text"],
-            "defaultOutputModes": ["text"],
-            "description": "An agent that can find geographical location details for IP addresses and resolve domains to IP addresses using an external lookup service.",
-            "name": "IP & Domain Network Agent",
-            "skills": [
-                {
-                    "description": "Retrieves geographical location information (city, country, coordinates, etc.) for a given IP address.",
-                    "examples": [
-                        "What's the location of 8.8.8.8?",
-                        "Where is 192.168.1.1 located?",
-                        "Can you find the geographical data for IP 203.0.113.45?",
-                        "Tell me the city and country for 172.217.10.14.",
-                        "What's the geographic info for this IP: 1.1.1.1?",
-                        "Location of 104.26.2.78",
-                        "Find details for 13.52.222.181",
-                        "IP address 93.184.216.34, what's its location?",
-                    ],
-                    "id": "get_location_by_ip",
-                    "name": "Get Location by IP Address",
-                    "tags": ["location", "ip address", "geography", "network"],
-                },
-                {
-                    "description": "Retrieves IP addresses associated with a given domain name.",
-                    "examples": [
-                        "What are the IPs for google.com?",
-                        "Get IP addresses for example.com",
-                        "Which IPs does openai.com resolve to?",
-                        "Find all IPs linked to wikipedia.org",
-                        "Show me the IP addresses for github.com",
-                    ],
-                    "id": "get_ips_by_domain",
-                    "name": "Get IPs by Domain",
-                    "tags": ["dns", "domain", "ip address", "network"],
-                },
-            ],
-            "url": "http://localhost:4401",
-            "version": "1.0.0",
-        },
-    ]
+
+    example_agents = []
+    example_agents_dir = f"{sys.path[0]}/example_agents"
+
+    for agent_dir in os.listdir(example_agents_dir):
+        try:
+            with open(f"{example_agents_dir}/{agent_dir}/metadata.json", "r") as f:
+                card = json.load(f).get("card")
+                if card:
+                    example_agents.append(card)
+
+        except Exception as e:
+            continue
+
+    return example_agents
 
 
 async def call_agent(

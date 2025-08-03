@@ -1,0 +1,56 @@
+{
+  "card": {
+    "capabilities": {
+      "streaming": false
+    },
+    "defaultInputModes": ["text"],
+    "defaultOutputModes": ["text"],
+    "description": "An agent that can find geographical location details for IP addresses and resolve domains to IP addresses using an external lookup service.",
+    "name": "IP & Domain Network Agent",
+    "skills": [
+      {
+        "description": "Retrieves geographical location information (city, country, coordinates, etc.) for a given IP address.",
+        "examples": [
+          "What's the location of 8.8.8.8?",
+          "Where is 192.168.1.1 located?",
+          "Can you find the geographical data for IP 203.0.113.45?",
+          "Tell me the city and country for 172.217.10.14.",
+          "What's the geographic info for this IP: 1.1.1.1?",
+          "Location of 104.26.2.78",
+          "Find details for 13.52.222.181",
+          "IP address 93.184.216.34, what's its location?"
+        ],
+        "id": "get_location_by_ip",
+        "name": "Get Location by IP Address",
+        "tags": ["location", "ip address", "geography", "network"]
+      },
+      {
+        "description": "Retrieves IP addresses associated with a given domain name.",
+        "examples": [
+          "What are the IPs for google.com?",
+          "Get IP addresses for example.com",
+          "Which IPs does openai.com resolve to?",
+          "Find all IPs linked to wikipedia.org",
+          "Show me the IP addresses for github.com"
+        ],
+        "id": "get_ips_by_domain",
+        "name": "Get IPs by Domain",
+        "tags": ["dns", "domain", "ip address", "network"]
+      }
+    ],
+    "url": "http://localhost:3201",
+    "version": "1.0.0"
+  },
+
+  "model": "gpt-4o-mini",
+  "sdk": "pydantic",
+
+  "model": "google/gemini-2.0-flash-001",
+  "model": "anthropic/claude-sonnet-4",
+  "model": "gpt-4o-mini",
+  "sdk": "openai",
+
+  "port": 3200,
+  
+  "system_prompt": "You are a helpful assistant that can answer questions and provide information based on the tools available."
+}

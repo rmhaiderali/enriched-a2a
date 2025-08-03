@@ -1,0 +1,50 @@
+{
+  "card": {
+    "capabilities": {
+      "streaming": false
+    },
+    "defaultInputModes": ["text"],
+    "defaultOutputModes": ["text"],
+    "description": "A versatile conversational agent capable of answering questions, explaining concepts, reasoning, and engaging in natural language dialogue across a broad range of topics.",
+    "name": "General-Purpose Language Agent",
+    "skills": [
+      {
+        "description": "Engages in natural conversation, answers general knowledge questions, provides explanations, and assists with reasoning across diverse topics.",
+        "examples": [
+          "What's the capital of France?",
+          "Explain how photosynthesis works.",
+          "Can you help me write a poem?",
+          "What's the meaning of life?",
+          "Who won the World Cup in 2018?",
+          "Summarize the theory of relativity.",
+          "Tell me a joke.",
+          "What are black holes?"
+        ],
+        "id": "general_conversation",
+        "name": "General Conversational Intelligence",
+        "tags": [
+          "general",
+          "conversation",
+          "knowledge",
+          "language model",
+          "reasoning",
+          "chat"
+        ]
+      }
+    ],
+    "url": "http://localhost:3202",
+    "version": "1.0.0"
+  },
+
+  "model": "google/gemini-2.0-flash-001",
+  "model": "anthropic/claude-sonnet-4",
+  "model": "gpt-4o-mini",
+  "sdk": "openai",
+
+  "model": "gpt-4o-mini",
+  "sdk": "pydantic",
+
+  "port": 3202,
+
+  "system_prompt": "You are a helpful assistant that can answer questions and provide information based on the tools available."
+}

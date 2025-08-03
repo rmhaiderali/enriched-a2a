@@ -83,7 +83,7 @@ class Agent:
         if not isinstance(self.extended_card, AgentCard | None):
             raise TypeError("extended_card must be an instance of AgentCard")
 
-    def run(self, port: int = 9999):
+    def run(self, port: int = 9999, host: str = "0.0.0.0"):
         if not isinstance(port, int) or (port < 1 and port > 65535):
             raise ValueError("port must be an integer between 1 and 65535")
 
@@ -98,4 +98,4 @@ class Agent:
             http_handler=request_handler,
         )
 
-        uvicorn.run(server.build(), port=port)
+        uvicorn.run(server.build(), host=host, port=port)
